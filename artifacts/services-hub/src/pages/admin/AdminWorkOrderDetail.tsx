@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ArrowLeft, UserPlus, AlertCircle, CheckCircle, XCircle, RotateCcw } from "lucide-react";
+import { MapView } from "@/components/MapView";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -106,6 +107,13 @@ export function AdminWorkOrderDetail() {
           <CardContent><p className="text-sm">{order.description}</p></CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Localização</CardTitle></CardHeader>
+        <CardContent>
+          <MapView address={order.location} cep={order.cep} />
+        </CardContent>
+      </Card>
 
       <div className="flex gap-2 flex-wrap">
         {!order.providerCompanyId && (

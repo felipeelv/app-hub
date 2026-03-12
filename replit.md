@@ -93,6 +93,14 @@ requested → accepted → in_progress → completed → invoiced → paid → p
 - Financeiro (pending receivables + payout history)
 - Notificações
 
+## Mapbox Map
+
+- Work order detail pages (Admin, Provider, Requester) show an interactive Mapbox map with a pin at the service address
+- Uses `mapbox-gl` library with Mapbox Geocoding API to convert addresses to coordinates
+- Requires `VITE_MAPBOX_TOKEN` environment variable (Mapbox public access token)
+- Component: `artifacts/services-hub/src/components/MapView.tsx`
+- Graceful fallback shown if geocoding fails or token is missing
+
 ## Key Files
 
 - `lib/api-spec/openapi.yaml` — OpenAPI source of truth

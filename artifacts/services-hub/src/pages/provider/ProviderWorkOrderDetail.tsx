@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ArrowLeft, CheckCircle, Play, Flag } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { MapView } from "@/components/MapView";
 import { useToast } from "@/hooks/use-toast";
 
 export function ProviderWorkOrderDetail() {
@@ -70,6 +71,13 @@ export function ProviderWorkOrderDetail() {
           <CardContent><p className="text-sm text-muted-foreground">{order.notes}</p></CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Localização</CardTitle></CardHeader>
+        <CardContent>
+          <MapView address={order.location} cep={order.cep} />
+        </CardContent>
+      </Card>
 
       <div className="flex gap-3">
         {order.status === "requested" && (
