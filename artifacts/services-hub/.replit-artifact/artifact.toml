@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "ServicesHub"
+version = "1.0.0"
+id = "artifacts/services-hub"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 24980
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/services-hub run dev"
+
+[services.env]
+PORT = "24980"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/services-hub", "run", "build"]
+publicDir = "artifacts/services-hub/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

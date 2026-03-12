@@ -1,22 +1,37 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: ServicesHub B2B intermediation platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Mock auth / profile selection
+  - name: requester
+    description: Requester company portal
+  - name: provider
+    description: Provider company portal
+  - name: admin
+    description: Admin / intermediator portal
+  - name: catalog
+    description: Service catalog
+  - name: workorders
+    description: Work orders
+  - name: financial
+    description: Financial operations
+  - name: notifications
+    description: Notifications
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +39,1570 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Mock Auth ───────────────────────────────────────────────────
+  /auth/profiles:
+    get:
+      operationId: listProfiles
+      tags: [auth]
+      summary: List all mock profiles for dev switcher
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Profile"
+
+  /auth/me:
+    get:
+      operationId: getCurrentProfile
+      tags: [auth]
+      summary: Get current mock profile
+      parameters:
+        - name: x-profile-id
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+
+  # ─── Requester Portal ─────────────────────────────────────────────
+  /requester/dashboard:
+    get:
+      operationId: getRequesterDashboard
+      tags: [requester]
+      summary: Requester dashboard summary
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequesterDashboard"
+
+  /requester/work-orders:
+    get:
+      operationId: listRequesterWorkOrders
+      tags: [requester]
+      summary: List work orders for requester
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkOrderRequesterView"
+    post:
+      operationId: createWorkOrder
+      tags: [requester]
+      summary: Create a new work order request
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkOrderInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrderRequesterView"
+
+  /requester/work-orders/{id}:
+    get:
+      operationId: getRequesterWorkOrder
+      tags: [requester]
+      summary: Get single work order detail for requester
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrderRequesterView"
+
+  /requester/invoices:
+    get:
+      operationId: listRequesterInvoices
+      tags: [requester]
+      summary: List invoices/pending payments for requester
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InvoiceRequesterView"
+
+  /requester/invoices/pay:
+    post:
+      operationId: payInvoices
+      tags: [requester]
+      summary: Pay selected invoices in batch
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayInvoicesInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResult"
+
+  /requester/catalog:
+    get:
+      operationId: listCatalogForRequester
+      tags: [requester]
+      summary: Browse service catalog (requester view, no prices)
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: region
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CatalogItemRequesterView"
+
+  # ─── Provider Portal ─────────────────────────────────────────────
+  /provider/dashboard:
+    get:
+      operationId: getProviderDashboard
+      tags: [provider]
+      summary: Provider dashboard summary
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderDashboard"
+
+  /provider/catalog:
+    get:
+      operationId: listProviderCatalog
+      tags: [provider]
+      summary: List provider's own catalog items
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CatalogItem"
+    post:
+      operationId: createCatalogItem
+      tags: [provider]
+      summary: Create a new catalog item
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCatalogItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogItem"
+
+  /provider/catalog/{id}:
+    put:
+      operationId: updateCatalogItem
+      tags: [provider]
+      summary: Update a catalog item
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCatalogItemInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogItem"
+    delete:
+      operationId: deleteCatalogItem
+      tags: [provider]
+      summary: Delete a catalog item
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No content
+
+  /provider/work-orders:
+    get:
+      operationId: listProviderWorkOrders
+      tags: [provider]
+      summary: List work orders assigned to provider
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkOrderProviderView"
+
+  /provider/work-orders/{id}:
+    get:
+      operationId: getProviderWorkOrder
+      tags: [provider]
+      summary: Get single work order for provider
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrderProviderView"
+
+  /provider/work-orders/{id}/action:
+    post:
+      operationId: providerWorkOrderAction
+      tags: [provider]
+      summary: Take action on a work order (accept, start, complete)
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkOrderActionInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrderProviderView"
+
+  /provider/financial:
+    get:
+      operationId: getProviderFinancial
+      tags: [provider]
+      summary: Provider financial summary and payout history
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderFinancial"
+
+  # ─── Admin Portal ────────────────────────────────────────────────
+  /admin/dashboard:
+    get:
+      operationId: getAdminDashboard
+      tags: [admin]
+      summary: Admin operational and financial dashboard
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+
+  /admin/requester-companies:
+    get:
+      operationId: listRequesterCompanies
+      tags: [admin]
+      summary: List all requester companies
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RequesterCompany"
+    post:
+      operationId: createRequesterCompany
+      tags: [admin]
+      summary: Create a requester company
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRequesterCompanyInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequesterCompany"
+
+  /admin/provider-companies:
+    get:
+      operationId: listProviderCompanies
+      tags: [admin]
+      summary: List all provider companies
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProviderCompany"
+    post:
+      operationId: createProviderCompany
+      tags: [admin]
+      summary: Create a provider company
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProviderCompanyInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderCompany"
+
+  /admin/work-orders:
+    get:
+      operationId: listAdminWorkOrders
+      tags: [admin]
+      summary: List all work orders (admin full view)
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: requesterId
+          in: query
+          schema:
+            type: string
+        - name: providerId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkOrderAdminView"
+
+  /admin/work-orders/{id}:
+    get:
+      operationId: getAdminWorkOrder
+      tags: [admin]
+      summary: Get full work order detail for admin
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrderAdminView"
+
+  /admin/work-orders/{id}/adjust:
+    post:
+      operationId: adminAdjustWorkOrder
+      tags: [admin]
+      summary: Admin adjust/reopen/cancel a work order
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminAdjustWorkOrderInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrderAdminView"
+
+  /admin/work-orders/{id}/assign:
+    post:
+      operationId: adminAssignWorkOrder
+      tags: [admin]
+      summary: Admin assign a work order to a provider
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminAssignWorkOrderInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrderAdminView"
+
+  /admin/invoices:
+    get:
+      operationId: listAdminInvoices
+      tags: [admin]
+      summary: List all invoices (admin)
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InvoiceAdminView"
+
+  /admin/payments:
+    get:
+      operationId: listAdminPayments
+      tags: [admin]
+      summary: List all payments received from requesters
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+
+  /admin/payouts:
+    get:
+      operationId: listAdminPayouts
+      tags: [admin]
+      summary: List all payouts to providers
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payout"
+    post:
+      operationId: registerPayout
+      tags: [admin]
+      summary: Register a payout to a provider
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterPayoutInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payout"
+
+  /admin/travel-pricing:
+    get:
+      operationId: listTravelPricingRules
+      tags: [admin]
+      summary: List travel pricing rules
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TravelPricingRule"
+    post:
+      operationId: createTravelPricingRule
+      tags: [admin]
+      summary: Create a travel pricing rule
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTravelPricingRuleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TravelPricingRule"
+
+  /admin/travel-pricing/{id}:
+    put:
+      operationId: updateTravelPricingRule
+      tags: [admin]
+      summary: Update a travel pricing rule
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTravelPricingRuleInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TravelPricingRule"
+    delete:
+      operationId: deleteTravelPricingRule
+      tags: [admin]
+      summary: Delete a travel pricing rule
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No content
+
+  /admin/commission-settings:
+    get:
+      operationId: getCommissionSettings
+      tags: [admin]
+      summary: Get commission configuration
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionSettings"
+    put:
+      operationId: updateCommissionSettings
+      tags: [admin]
+      summary: Update commission settings
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommissionSettings"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionSettings"
+
+  /admin/audit-log:
+    get:
+      operationId: listAuditLog
+      tags: [admin]
+      summary: List audit/history log for admin
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: workOrderId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditEntry"
+
+  # ─── Notifications ────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for current profile
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      parameters:
+        - $ref: "#/components/parameters/ProfileHeader"
+      responses:
+        "204":
+          description: No content
+
 components:
+  parameters:
+    ProfileHeader:
+      name: x-profile-id
+      in: header
+      required: false
+      schema:
+        type: string
+
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [requester, provider, admin]
+        name:
+          type: string
+        companyId:
+          type: string
+        companyName:
+          type: string
+      required: [id, role, name, companyId, companyName]
+
+    # ─── Companies ───────────────────────────────────────────────
+    RequesterCompany:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        taxId:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        cep:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, email, createdAt]
+
+    CreateRequesterCompanyInput:
+      type: object
+      properties:
+        name:
+          type: string
+        taxId:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        cep:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+      required: [name, email]
+
+    ProviderCompany:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        taxId:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        cep:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        commissionRate:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, email, createdAt]
+
+    CreateProviderCompanyInput:
+      type: object
+      properties:
+        name:
+          type: string
+        taxId:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        cep:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        commissionRate:
+          type: number
+      required: [name, email]
+
+    # ─── Catalog ─────────────────────────────────────────────────
+    CatalogItem:
+      type: object
+      properties:
+        id:
+          type: string
+        providerCompanyId:
+          type: string
+        providerCompanyName:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        estimatedDays:
+          type: integer
+        basePrice:
+          type: number
+        isAvailable:
+          type: boolean
+        regions:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, providerCompanyId, name, category, basePrice, isAvailable, createdAt]
+
+    CatalogItemRequesterView:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        estimatedDays:
+          type: integer
+        isAvailable:
+          type: boolean
+        regions:
+          type: array
+          items:
+            type: string
+      required: [id, name, category, isAvailable]
+
+    CreateCatalogItemInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        estimatedDays:
+          type: integer
+        basePrice:
+          type: number
+        isAvailable:
+          type: boolean
+        regions:
+          type: array
+          items:
+            type: string
+      required: [name, category, basePrice]
+
+    # ─── Work Orders ──────────────────────────────────────────────
+    WorkOrderStatus:
+      type: string
+      enum:
+        - requested
+        - accepted
+        - in_progress
+        - completed
+        - invoiced
+        - paid
+        - paid_out
+        - closed
+        - cancelled
+
+    WorkOrderRequesterView:
+      type: object
+      properties:
+        id:
+          type: string
+        serviceName:
+          type: string
+        category:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        notes:
+          type: string
+        status:
+          $ref: "#/components/schemas/WorkOrderStatus"
+        requestedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        finalPrice:
+          type: number
+        invoiceId:
+          type: string
+        statusHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusHistoryEntry"
+      required: [id, serviceName, status, requestedAt]
+
+    WorkOrderProviderView:
+      type: object
+      properties:
+        id:
+          type: string
+        serviceName:
+          type: string
+        category:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        notes:
+          type: string
+        status:
+          $ref: "#/components/schemas/WorkOrderStatus"
+        requestedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        basePrice:
+          type: number
+        travelCost:
+          type: number
+        providerReceivable:
+          type: number
+        statusHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusHistoryEntry"
+      required: [id, serviceName, status, requestedAt]
+
+    WorkOrderAdminView:
+      type: object
+      properties:
+        id:
+          type: string
+        requesterCompanyId:
+          type: string
+        requesterCompanyName:
+          type: string
+        providerCompanyId:
+          type: string
+        providerCompanyName:
+          type: string
+        serviceCatalogItemId:
+          type: string
+        serviceName:
+          type: string
+        category:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        notes:
+          type: string
+        status:
+          $ref: "#/components/schemas/WorkOrderStatus"
+        requestedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        basePrice:
+          type: number
+        travelCost:
+          type: number
+        commissionAmount:
+          type: number
+        finalPrice:
+          type: number
+        providerReceivable:
+          type: number
+        invoiceId:
+          type: string
+        statusHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusHistoryEntry"
+      required: [id, serviceName, status, requestedAt]
+
+    StatusHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          $ref: "#/components/schemas/WorkOrderStatus"
+        note:
+          type: string
+        changedAt:
+          type: string
+          format: date-time
+        changedBy:
+          type: string
+      required: [id, status, changedAt]
+
+    CreateWorkOrderInput:
+      type: object
+      properties:
+        catalogItemId:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        notes:
+          type: string
+        cep:
+          type: string
+      required: [catalogItemId, location, description]
+
+    WorkOrderActionInput:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [accept, start, complete]
+        notes:
+          type: string
+      required: [action]
+
+    AdminAdjustWorkOrderInput:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [reopen, cancel, correct]
+        notes:
+          type: string
+        newStatus:
+          $ref: "#/components/schemas/WorkOrderStatus"
+      required: [action, notes]
+
+    AdminAssignWorkOrderInput:
+      type: object
+      properties:
+        providerCompanyId:
+          type: string
+        catalogItemId:
+          type: string
+      required: [providerCompanyId, catalogItemId]
+
+    # ─── Financial ───────────────────────────────────────────────
+    InvoiceStatus:
+      type: string
+      enum: [pending, paid, cancelled]
+
+    InvoiceRequesterView:
+      type: object
+      properties:
+        id:
+          type: string
+        workOrderId:
+          type: string
+        serviceName:
+          type: string
+        location:
+          type: string
+        finalPrice:
+          type: number
+        status:
+          $ref: "#/components/schemas/InvoiceStatus"
+        generatedAt:
+          type: string
+          format: date-time
+        paidAt:
+          type: string
+          format: date-time
+      required: [id, workOrderId, serviceName, finalPrice, status, generatedAt]
+
+    InvoiceAdminView:
+      type: object
+      properties:
+        id:
+          type: string
+        workOrderId:
+          type: string
+        requesterCompanyName:
+          type: string
+        providerCompanyName:
+          type: string
+        serviceName:
+          type: string
+        basePrice:
+          type: number
+        travelCost:
+          type: number
+        commissionAmount:
+          type: number
+        finalPrice:
+          type: number
+        providerReceivable:
+          type: number
+        status:
+          $ref: "#/components/schemas/InvoiceStatus"
+        generatedAt:
+          type: string
+          format: date-time
+        paidAt:
+          type: string
+          format: date-time
+      required: [id, workOrderId, finalPrice, status, generatedAt]
+
+    PayInvoicesInput:
+      type: object
+      properties:
+        invoiceIds:
+          type: array
+          items:
+            type: string
+        paymentMethod:
+          type: string
+          enum: [bank_transfer, pix, credit_card]
+      required: [invoiceIds, paymentMethod]
+
+    PaymentResult:
+      type: object
+      properties:
+        paymentId:
+          type: string
+        totalAmount:
+          type: number
+        invoicesPaid:
+          type: integer
+        paidAt:
+          type: string
+          format: date-time
+      required: [paymentId, totalAmount, invoicesPaid, paidAt]
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        requesterCompanyId:
+          type: string
+        requesterCompanyName:
+          type: string
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+        invoiceIds:
+          type: array
+          items:
+            type: string
+        paidAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, requesterCompanyId, amount, paidAt, createdAt]
+
+    RegisterPayoutInput:
+      type: object
+      properties:
+        providerCompanyId:
+          type: string
+        workOrderIds:
+          type: array
+          items:
+            type: string
+        amount:
+          type: number
+        notes:
+          type: string
+      required: [providerCompanyId, workOrderIds, amount]
+
+    Payout:
+      type: object
+      properties:
+        id:
+          type: string
+        providerCompanyId:
+          type: string
+        providerCompanyName:
+          type: string
+        amount:
+          type: number
+        workOrderIds:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+        paidAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, providerCompanyId, amount, paidAt, createdAt]
+
+    TravelPricingRule:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ruleType:
+          type: string
+          enum: [cep_prefix, region_name, fixed]
+        matchValue:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, ruleType, matchValue, price, isActive, createdAt]
+
+    CreateTravelPricingRuleInput:
+      type: object
+      properties:
+        name:
+          type: string
+        ruleType:
+          type: string
+          enum: [cep_prefix, region_name, fixed]
+        matchValue:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+        isActive:
+          type: boolean
+      required: [name, ruleType, matchValue, price]
+
+    CommissionSettings:
+      type: object
+      properties:
+        defaultRate:
+          type: number
+          description: Default commission rate as a percentage (e.g. 15 means 15%)
+        updatedAt:
+          type: string
+          format: date-time
+      required: [defaultRate]
+
+    AuditEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        action:
+          type: string
+        actor:
+          type: string
+        details:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, entityType, entityId, action, actor, createdAt]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        recipientId:
+          type: string
+        recipientRole:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum:
+            - new_request
+            - request_accepted
+            - service_started
+            - service_completed
+            - invoice_generated
+            - payment_confirmed
+            - payout_confirmed
+        relatedWorkOrderId:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, recipientId, title, message, type, isRead, createdAt]
+
+    # ─── Dashboards ──────────────────────────────────────────────
+    RequesterDashboard:
+      type: object
+      properties:
+        openRequests:
+          type: integer
+        inProgress:
+          type: integer
+        completed:
+          type: integer
+        invoiced:
+          type: integer
+        pendingPayment:
+          type: integer
+        totalPendingAmount:
+          type: number
+        recentWorkOrders:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkOrderRequesterView"
+      required: [openRequests, inProgress, completed, invoiced, pendingPayment, totalPendingAmount]
+
+    ProviderDashboard:
+      type: object
+      properties:
+        newOrders:
+          type: integer
+        inProgress:
+          type: integer
+        completed:
+          type: integer
+        totalReceivable:
+          type: number
+        totalReceived:
+          type: number
+        recentWorkOrders:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkOrderProviderView"
+      required: [newOrders, inProgress, completed, totalReceivable, totalReceived]
+
+    AdminDashboard:
+      type: object
+      properties:
+        totalWorkOrders:
+          type: integer
+        openWorkOrders:
+          type: integer
+        completedWorkOrders:
+          type: integer
+        totalBilled:
+          type: number
+        totalReceived:
+          type: number
+        totalPayedOut:
+          type: number
+        totalCommission:
+          type: number
+        pendingPayments:
+          type: number
+        pendingPayouts:
+          type: number
+        recentWorkOrders:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkOrderAdminView"
+      required:
+        - totalWorkOrders
+        - openWorkOrders
+        - completedWorkOrders
+        - totalBilled
+        - totalReceived
+        - totalPayedOut
+        - totalCommission
+        - pendingPayments
+        - pendingPayouts
+
+    ProviderFinancial:
+      type: object
+      properties:
+        totalReceivable:
+          type: number
+        totalReceived:
+          type: number
+        totalTravelCost:
+          type: number
+        pendingWorkOrders:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkOrderProviderView"
+        payouts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payout"
+      required: [totalReceivable, totalReceived, totalTravelCost]

@@ -1,0 +1,251 @@
+Atue como arquiteto de software sênior e engenheiro full-stack. Crie um MVP de app web B2B para intermediação e agendamento de serviços, com 3 portais conectados ao mesmo banco de dados:
+
+1. Portal da Empresa Contratante
+2. Portal do Prestador de Serviço
+3. Portal do Admin/Intermediador
+
+Antes de gerar o código, apresente de forma objetiva:
+- arquitetura escolhida
+- modelagem do banco
+- fluxo de estados do serviço
+- principais telas e regras de visibilidade
+
+Depois implemente o projeto.
+
+Se a stack não estiver definida, use:
+- Next.js
+- TypeScript
+- PostgreSQL
+- Prisma
+- Tailwind
+- shadcn/ui
+
+Objetivo do sistema:
+Criar uma plataforma onde empresas contratantes solicitem serviços/reparos, prestadores cadastrem seus serviços previamente, e um intermediador/admin controle toda a operação, incluindo privacidade entre as partes, faturamento, recebimentos, repasses e comissões.
+
+Regras centrais de negócio:
+- O sistema deve ter 3 portais separados, mas usando o mesmo banco de dados.
+- O admin/intermediador tem acesso completo às informações da empresa contratante e do prestador.
+- A empresa contratante e o prestador não podem ver o contato direto um do outro.
+- Essa restrição de visibilidade deve existir no backend/API, não apenas na interface.
+- O prestador cadastra seus serviços em um catálogo com:
+  - nome do serviço
+  - descrição
+  - categoria
+  - prazo estimado
+  - preço base
+  - disponibilidade
+  - região atendida
+- A empresa contratante solicita um serviço para uma unidade/local específico.
+- O preço base cadastrado pelo prestador não deve aparecer para a contratante.
+- A contratante deve ver apenas o valor final calculado pelo sistema.
+- O valor final cobrado da contratante deve ser:
+  preço base do serviço + valor de deslocamento + comissão do intermediador
+- O valor a receber pelo prestador deve ser:
+  preço base + deslocamento
+- A comissão deve ficar visível apenas para o admin.
+- O deslocamento deve ser calculado automaticamente com base em regras configuráveis pelo admin.
+- Para o MVP, implementar cálculo por faixa de região, CEP ou km, evitando depender de API externa de mapas.
+- A empresa contratante pode acumular vários serviços faturados e pagar em lote.
+- O pagamento pode ser diário, semanal ou por seleção manual de múltiplos itens.
+- O valor pago pela contratante entra primeiro no controle financeiro do intermediador.
+- Depois o admin registra o repasse ao prestador.
+- O sistema deve controlar claramente:
+  - o que foi faturado
+  - o que foi recebido
+  - o que foi repassado
+  - o que ficou como comissão
+- Quando o prestador marcar um serviço como concluído, o sistema deve gerar uma fatura/invoice interna e tornar o item elegível para pagamento pela contratante.
+- O admin deve poder ajustar, reabrir, cancelar ou corrigir um serviço em caso de erro ou disputa.
+- Considere “invoice” como fatura interna do sistema, não como nota fiscal oficial.
+
+Fluxo do serviço:
+1. serviço solicitado pela contratante
+2. serviço recebido/aceito pelo prestador
+3. serviço em execução
+4. serviço concluído pelo prestador
+5. invoice/fatura gerada automaticamente
+6. item fica disponível para pagamento pela contratante
+7. pagamento confirmado no financeiro do intermediador
+8. repasse registrado para o prestador
+9. serviço encerrado
+
+Portais e funcionalidades mínimas:
+
+PORTAL DA EMPRESA CONTRATANTE
+- Dashboard com resumo:
+  - solicitações abertas
+  - serviços em andamento
+  - serviços concluídos
+  - itens faturados
+  - itens pendentes de pagamento
+- Catálogo de serviços
+- Tela para solicitar novo serviço
+- Lista e histórico de solicitações com filtros por:
+  - status
+  - data
+  - categoria
+  - unidade/local
+- Tela de detalhe do serviço com:
+  - descrição
+  - local
+  - status
+  - observações
+  - valor final
+  - histórico de movimentações
+- Tela financeira com:
+  - lista de invoices/faturas pendentes
+  - seleção múltipla
+  - totalizador
+  - ação de pagar em lote
+- Área de notificações
+
+PORTAL DO PRESTADOR
+- Dashboard com:
+  - novos serviços
+  - serviços em andamento
+  - serviços concluídos
+  - valores a receber
+  - valores já recebidos
+- Tela para cadastrar e editar serviços do catálogo
+- Lista de ordens de serviço atribuídas ao prestador
+- Tela de detalhe da ordem com:
+  - local do atendimento
+  - descrição do serviço
+  - observações
+  - status
+  - ações para aceitar, iniciar e concluir
+- Tela financeira com:
+  - valores a receber
+  - valores recebidos
+  - deslocamento separado
+  - histórico de repasses
+- Área de notificações
+
+PORTAL DO ADMIN/INTERMEDIADOR
+- Dashboard operacional com visão global
+- Gestão completa de:
+  - contratantes
+  - prestadores
+  - ordens de serviço
+  - contatos privados
+  - regras de deslocamento
+  - regras de comissão
+- Dashboard financeiro com:
+  - total faturado
+  - total recebido
+  - total repassado aos prestadores
+  - total de comissão
+  - pendências de pagamento
+  - pendências de repasse
+- Tela de invoices/faturas
+- Tela de repasses
+- Tela de auditoria/histórico
+- Área de notificações
+
+Regras de visibilidade:
+- Contratante:
+  - vê apenas seus próprios serviços e faturas
+  - não vê contato direto do prestador
+  - não vê preço base nem comissão
+  - vê apenas o valor final cobrado
+- Prestador:
+  - vê apenas ordens atribuídas a ele
+  - não vê contato direto da contratante
+  - vê o valor que irá receber
+  - vê deslocamento separado
+  - não vê comissão do intermediador
+- Admin:
+  - vê tudo
+  - gerencia contatos privados
+  - gerencia comissão e deslocamento
+  - gerencia faturamento, recebimentos e repasses
+
+Modelagem mínima do banco:
+- RequesterCompany
+- ProviderCompany
+- AdminProfile
+- PrivateContact
+- ServiceCatalogItem
+- WorkOrder
+- WorkOrderStatusHistory
+- TravelPricingRule
+- Invoice
+- InvoiceItem
+- Payment
+- Payout
+- CommissionLedger
+- Notification
+
+Campos importantes da WorkOrder:
+- id
+- requesterCompanyId
+- providerCompanyId
+- serviceCatalogItemId
+- local/unidade
+- descrição
+- observações
+- data da solicitação
+- data da conclusão
+- preço base
+- valor de deslocamento
+- valor de comissão
+- valor final cobrado
+- valor líquido do prestador
+- status atual
+- timestamps de criação e atualização
+
+Regras financeiras:
+- Não controlar o financeiro apenas com status booleanos.
+- Criar tabelas específicas para:
+  - invoices
+  - pagamentos
+  - repasses
+  - comissão
+- Garantir rastreabilidade completa dos valores.
+- O dashboard financeiro do admin deve ser calculado a partir dessas entidades financeiras.
+
+Notificações:
+Implementar notificações internas no sistema para:
+- nova solicitação criada
+- solicitação aceita
+- serviço iniciado
+- serviço concluído
+- invoice gerada
+- pagamento confirmado
+- repasse confirmado
+Deixar a arquitetura preparada para e-mail/push no futuro.
+
+UX e interface:
+- Interface responsiva
+- Dashboards simples e operacionais
+- Tabelas com filtros e busca
+- Badges de status
+- Totais financeiros visíveis por portal
+- Fluxo claro e sem poluição visual
+
+Autenticação e futuro:
+- Não implementar login real agora
+- Mas estruturar o projeto para suportar autenticação e autorização futura com RBAC
+- Criar separação lógica por perfil:
+  - contratante
+  - prestador
+  - admin
+- Em modo de desenvolvimento, usar um seletor de perfil mock
+- Nunca expor dados privados em endpoints ou payloads indevidos
+
+Entregáveis esperados:
+- arquitetura da aplicação
+- schema do banco
+- seed de dados de exemplo
+- páginas principais dos 3 portais
+- fluxo completo de solicitação até repasse
+- dashboards financeiros
+- notificações internas
+- instruções para rodar o projeto
+
+Importante:
+- Priorize privacidade entre contratante e prestador
+- Priorize integridade financeira
+- Evite simplificações que quebrem o modelo de intermediação
+- Se houver ambiguidades, adote a solução mais segura e escalável para um MVP B2B

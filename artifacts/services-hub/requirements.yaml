@@ -1,0 +1,12 @@
+packages:
+  "framer-motion": "For page transitions and smooth UI animations"
+  "recharts": "For beautiful analytical charts on dashboards"
+  "date-fns": "For formatting dates consistently across tables"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes safely"
+  "lucide-react": "For beautiful standard icons across the platform"
+
+notes:
+  - Global window.fetch is intercepted to automatically attach the x-profile-id header required by the API.
+  - Using Wouter for role-based routing. The app auto-redirects based on the selected profile role.
+  - API Hooks are imported directly from @workspace/api-client-react.
