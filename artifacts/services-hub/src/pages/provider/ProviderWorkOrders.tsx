@@ -14,54 +14,54 @@ function WorkOrderCard({ wo, onAction }: { wo: any; onAction: (id: string, actio
           <div>
             <h3 className="text-lg font-bold text-foreground">{wo.serviceName}</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Solicitado {formatDate(wo.requestedAt)} · OS: {wo.id.split('-')[0]}
+              Requested {formatDate(wo.requestedAt)} · WO: {wo.id.split('-')[0]}
             </p>
           </div>
-          <StatusBadge status={wo.status} />
+          <StatusBadge status={wo.status} lang="en" />
         </div>
         <div className="grid grid-cols-2 gap-4 text-sm mt-4">
           <div>
-            <p className="font-semibold text-muted-foreground uppercase text-xs tracking-wider mb-1">Local</p>
+            <p className="font-semibold text-muted-foreground uppercase text-xs tracking-wider mb-1">Location</p>
             <p className="font-medium text-foreground">{wo.location}</p>
           </div>
           <div>
-            <p className="font-semibold text-muted-foreground uppercase text-xs tracking-wider mb-1">A Receber</p>
+            <p className="font-semibold text-muted-foreground uppercase text-xs tracking-wider mb-1">Receivable</p>
             <p className="font-bold text-emerald-600 text-base">{formatCurrency(wo.providerReceivable)}</p>
           </div>
         </div>
         {wo.description && (
           <div className="mt-4 bg-muted/30 p-4 rounded-lg text-sm text-foreground/80">
-            <span className="font-semibold text-xs uppercase tracking-wider block mb-1 text-muted-foreground">Descrição</span>
+            <span className="font-semibold text-xs uppercase tracking-wider block mb-1 text-muted-foreground">Description</span>
             {wo.description}
           </div>
         )}
       </div>
       <div className="w-full md:w-64 bg-muted/10 p-6 flex flex-col justify-center gap-4">
-        <p className="text-xs font-semibold text-center text-muted-foreground uppercase tracking-wider">Ação Necessária</p>
+        <p className="text-xs font-semibold text-center text-muted-foreground uppercase tracking-wider">Required Action</p>
         {wo.status === 'requested' && (
           <button onClick={() => onAction(wo.id, 'accept')} className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2">
-            <Check className="w-5 h-5" /> Aceitar Serviço
+            <Check className="w-5 h-5" /> Accept Job
           </button>
         )}
         {wo.status === 'accepted' && (
           <button onClick={() => onAction(wo.id, 'start')} className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold shadow-lg shadow-orange-500/20 transition-all flex items-center justify-center gap-2">
-            <Play className="w-5 h-5" /> Iniciar Serviço
+            <Play className="w-5 h-5" /> Start Job
           </button>
         )}
         {wo.status === 'in_progress' && (
           <button onClick={() => onAction(wo.id, 'complete')} className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-600/20 transition-all flex items-center justify-center gap-2">
-            <CheckCircle2 className="w-5 h-5" /> Concluir
+            <CheckCircle2 className="w-5 h-5" /> Mark Complete
           </button>
         )}
         {(wo.status === 'completed' || wo.status === 'invoiced' || wo.status === 'paid' || wo.status === 'paid_out') && (
           <div className="text-center py-4 bg-background rounded-xl border border-border border-dashed">
             <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
-            <p className="text-sm font-semibold text-foreground">Serviço Concluído</p>
-            <p className="text-xs text-muted-foreground mt-1">Aguardando repasse</p>
+            <p className="text-sm font-semibold text-foreground">Job Completed</p>
+            <p className="text-xs text-muted-foreground mt-1">Awaiting payout</p>
           </div>
         )}
         {wo.status === 'cancelled' && (
-          <div className="text-center py-4 bg-destructive/5 rounded-xl border border-destructive/20 text-destructive font-semibold">Cancelado</div>
+          <div className="text-center py-4 bg-destructive/5 rounded-xl border border-destructive/20 text-destructive font-semibold">Cancelled</div>
         )}
       </div>
     </div>
@@ -78,7 +78,7 @@ export function ProviderWorkOrders() {
       await actionMutation.mutateAsync({ id, data: { action } });
       refetch();
     } catch {
-      toast({ title: "Erro ao atualizar status", variant: "destructive" });
+      toast({ title: "Error updating status", variant: "destructive" });
     }
   };
 
@@ -86,14 +86,14 @@ export function ProviderWorkOrders() {
     <div className="space-y-6">
       <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden min-h-[600px]">
         <div className="p-6 border-b border-border/60 bg-muted/10">
-          <h2 className="text-xl font-display font-bold">Ordens Atribuídas</h2>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie e atualize o status das suas ordens de serviço.</p>
+          <h2 className="text-xl font-display font-bold">Assigned Orders</h2>
+          <p className="text-sm text-muted-foreground mt-1">Manage and update the status of your work orders.</p>
         </div>
         <div className="p-6 grid grid-cols-1 gap-6">
           {isLoading ? (
             [1,2,3].map(i => <div key={i} className="h-48 bg-muted/50 rounded-xl animate-pulse"></div>)
           ) : !workOrders?.length ? (
-            <div className="py-12 text-center text-muted-foreground">Nenhuma ordem atribuída ainda.</div>
+            <div className="py-12 text-center text-muted-foreground">No assigned orders yet.</div>
           ) : (
             workOrders?.map(wo => <WorkOrderCard key={wo.id} wo={wo} onAction={handleAction} />)
           )}

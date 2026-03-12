@@ -6,63 +6,40 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatCurrency, formatDateShort } from "@/lib/format";
 
-const fmtDate = (d: string | Date | undefined | null) =>
-  d ? format(new Date(d), "dd/MM/yyyy", { locale: ptBR }) : "—";
-const fmtMoney = (v: number | null | undefined) => (v != null ? `R$ ${v.toFixed(2)}` : "—");
-
-type SimplifiedStatus = "solicitado" | "aguardando" | "concluido" | "cancelado";
+type SimplifiedStatus = "requested" | "in_progress" | "completed" | "cancelled";
 
 function toSimplified(status: string | undefined | null): SimplifiedStatus {
   switch (status) {
     case "requested":
     case "accepted":
-      return "solicitado";
+      return "requested";
     case "in_progress":
-      return "aguardando";
+      return "in_progress";
     case "completed":
     case "invoiced":
     case "paid":
     case "paid_out":
     case "closed":
-      return "concluido";
+      return "completed";
     case "cancelled":
-      return "cancelado";
+      return "cancelled";
     default:
-      return "solicitado";
+      return "requested";
   }
 }
 
 function SimplifiedBadge({ status }: { status: string | undefined | null }) {
   const simplified = toSimplified(status);
-  if (simplified === "solicitado") {
-    return (
-      <Badge className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100">
-        Solicitado
-      </Badge>
-    );
-  }
-  if (simplified === "aguardando") {
-    return (
-      <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">
-        Aguardando
-      </Badge>
-    );
-  }
-  if (simplified === "concluido") {
-    return (
-      <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100">
-        Concluído
-      </Badge>
-    );
-  }
-  return (
-    <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">
-      Cancelado
-    </Badge>
-  );
+  const map = {
+    requested:   { label: "Requested",   cls: "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100"   },
+    in_progress: { label: "In Progress", cls: "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100"},
+    completed:   { label: "Completed",   cls: "bg-green-100 text-green-700 border-green-200 hover:bg-green-100"},
+    cancelled:   { label: "Cancelled",   cls: "bg-red-100 text-red-700 border-red-200 hover:bg-red-100"       },
+  };
+  const info = map[simplified];
+  return <Badge className={info.cls}>{info.label}</Badge>;
 }
 
 export function RequesterWorkOrders() {
@@ -82,11 +59,11 @@ export function RequesterWorkOrders() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Minhas Solicitações</h1>
+      <h1 className="text-2xl font-semibold">My Requests</h1>
 
       <div className="flex gap-3 flex-wrap">
         <Input
-          placeholder="Buscar por serviço ou local..."
+          placeholder="Search by service or location..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
@@ -96,11 +73,11 @@ export function RequesterWorkOrders() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="solicitado">Solicitado</SelectItem>
-            <SelectItem value="aguardando">Aguardando</SelectItem>
-            <SelectItem value="concluido">Concluído</SelectItem>
-            <SelectItem value="cancelado">Cancelado</SelectItem>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="requested">Requested</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -109,18 +86,18 @@ export function RequesterWorkOrders() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Serviço</TableHead>
-              <TableHead>Local</TableHead>
+              <TableHead>Service</TableHead>
+              <TableHead>Location</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Valor Total</TableHead>
-              <TableHead>Solicitado em</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+              <TableHead>Requested</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                  Nenhuma solicitação encontrada
+                  No requests found
                 </TableCell>
               </TableRow>
             )}
@@ -135,8 +112,8 @@ export function RequesterWorkOrders() {
                 <TableCell>
                   <SimplifiedBadge status={o.status} />
                 </TableCell>
-                <TableCell className="text-right">{fmtMoney(o.finalPrice)}</TableCell>
-                <TableCell>{fmtDate(o.requestedAt)}</TableCell>
+                <TableCell className="text-right">{formatCurrency(o.finalPrice)}</TableCell>
+                <TableCell>{formatDateShort(o.requestedAt)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

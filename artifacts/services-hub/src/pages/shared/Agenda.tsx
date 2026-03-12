@@ -71,6 +71,8 @@ export default function Agenda() {
   const [showNewSlot, setShowNewSlot] = useState(false);
   const [newSlot, setNewSlot] = useState({ date: "", startTime: "08:00", endTime: "09:00", notes: "" });
 
+  const isEn = role !== "admin";
+
   const { data: slots = [], isLoading } = useQuery<Slot[]>({
     queryKey: ["agenda"],
     queryFn: async () => {
@@ -153,20 +155,24 @@ export default function Agenda() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">
-            {role === "admin" ? "Agenda Compartilhada" : role === "provider" ? "Minhas Disponibilidades" : "Agenda de Atendimento"}
+            {role === "admin"
+              ? "Agenda Compartilhada"
+              : role === "provider"
+              ? "My Availability"
+              : "Service Schedule"}
           </h2>
           <p className="text-muted-foreground text-sm mt-1">
             {role === "admin"
               ? "Veja todos os prestadores e suas disponibilidades"
               : role === "provider"
-              ? "Gerencie seus horários disponíveis para atendimento"
-              : "Veja os horários disponíveis para agendamento"}
+              ? "Manage your available time slots for service"
+              : "View available appointment slots"}
           </p>
         </div>
         {role === "provider" && (
           <Button onClick={() => openNewSlot()} className="gap-2">
             <Plus className="w-4 h-4" />
-            Nova Disponibilidade
+            {isEn ? "New Availability" : "Nova Disponibilidade"}
           </Button>
         )}
       </div>
@@ -252,28 +258,30 @@ export default function Agenda() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary" />
-              {selectedDate ? formatDate(selectedDate) : "Selecione um dia"}
+              {selectedDate ? formatDate(selectedDate) : isEn ? "Select a day" : "Selecione um dia"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {!selectedDate ? (
               <p className="text-sm text-muted-foreground text-center py-8">
-                Clique em um dia no calendário para ver os horários disponíveis.
+                {isEn ? "Click a day on the calendar to see available slots." : "Clique em um dia no calendário para ver os horários disponíveis."}
               </p>
             ) : isLoading ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{isEn ? "Loading..." : "Carregando..."}</p>
             ) : selectedSlots.length === 0 ? (
               <div className="text-center py-8 space-y-3">
                 <Calendar className="w-8 h-8 text-muted-foreground mx-auto" />
                 <p className="text-sm text-muted-foreground">
                   {role === "provider"
-                    ? "Nenhuma disponibilidade cadastrada para este dia."
+                    ? "No availability added for this day."
+                    : isEn
+                    ? "No available slots on this date."
                     : "Nenhum horário disponível nesta data."}
                 </p>
                 {role === "provider" && (
                   <Button variant="outline" size="sm" onClick={() => openNewSlot(selectedDate)} className="gap-1">
                     <Plus className="w-3 h-3" />
-                    Adicionar horário
+                    {isEn ? "Add time slot" : "Adicionar horário"}
                   </Button>
                 )}
               </div>
@@ -287,9 +295,9 @@ export default function Agenda() {
                       </span>
                       <div className="flex items-center gap-2">
                         {slot.isBooked ? (
-                          <Badge variant="secondary" className="text-xs">Reservado</Badge>
+                          <Badge variant="secondary" className="text-xs">{isEn ? "Booked" : "Reservado"}</Badge>
                         ) : (
-                          <Badge className="text-xs bg-green-100 text-green-700 border-green-200">Disponível</Badge>
+                          <Badge className="text-xs bg-green-100 text-green-700 border-green-200">{isEn ? "Available" : "Disponível"}</Badge>
                         )}
                         {(role === "provider" || role === "admin") && !slot.isBooked && (
                           <button
@@ -313,7 +321,7 @@ export default function Agenda() {
                 {role === "provider" && selectedDate && (
                   <Button variant="outline" size="sm" className="w-full gap-1 mt-1" onClick={() => openNewSlot(selectedDate)}>
                     <Plus className="w-3 h-3" />
-                    Adicionar horário
+                    {isEn ? "Add time slot" : "Adicionar horário"}
                   </Button>
                 )}
               </div>
@@ -326,11 +334,11 @@ export default function Agenda() {
       <Dialog open={showNewSlot} onOpenChange={setShowNewSlot}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Nova Disponibilidade</DialogTitle>
+            <DialogTitle>{isEn ? "New Availability Slot" : "Nova Disponibilidade"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>Data</Label>
+              <Label>{isEn ? "Date" : "Data"}</Label>
               <Input
                 type="date"
                 min={today}
@@ -340,7 +348,7 @@ export default function Agenda() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Início</Label>
+                <Label>{isEn ? "Start Time" : "Início"}</Label>
                 <Input
                   type="time"
                   value={newSlot.startTime}
@@ -348,7 +356,7 @@ export default function Agenda() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Fim</Label>
+                <Label>{isEn ? "End Time" : "Fim"}</Label>
                 <Input
                   type="time"
                   value={newSlot.endTime}
@@ -357,9 +365,9 @@ export default function Agenda() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Observações (opcional)</Label>
+              <Label>{isEn ? "Notes (optional)" : "Observações (opcional)"}</Label>
               <Textarea
-                placeholder="Ex: disponível para manutenção de ar-condicionado"
+                placeholder={isEn ? "e.g. available for HVAC maintenance" : "Ex: disponível para manutenção de ar-condicionado"}
                 value={newSlot.notes}
                 onChange={e => setNewSlot(s => ({ ...s, notes: e.target.value }))}
                 rows={2}
@@ -367,12 +375,12 @@ export default function Agenda() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewSlot(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowNewSlot(false)}>{isEn ? "Cancel" : "Cancelar"}</Button>
             <Button
               onClick={() => createMutation.mutate(newSlot)}
               disabled={!newSlot.date || !newSlot.startTime || !newSlot.endTime || createMutation.isPending}
             >
-              {createMutation.isPending ? "Salvando..." : "Salvar"}
+              {createMutation.isPending ? (isEn ? "Saving..." : "Salvando...") : (isEn ? "Save" : "Salvar")}
             </Button>
           </DialogFooter>
         </DialogContent>

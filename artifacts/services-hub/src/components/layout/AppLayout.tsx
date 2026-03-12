@@ -38,21 +38,21 @@ const getNavItems = (role: string) => {
   if (role === "requester") {
     return [
       { name: "Dashboard", href: "/requester/dashboard", icon: LayoutDashboard },
-      { name: "Catálogo de Serviços", href: "/requester/catalog", icon: Briefcase },
-      { name: "Minhas Solicitações", href: "/requester/work-orders", icon: FileText },
-      { name: "Agenda", href: "/requester/agenda", icon: CalendarDays },
-      { name: "Faturas e Pagamentos", href: "/requester/invoices", icon: CreditCard },
-      { name: "Notificações", href: "/requester/notifications", icon: Bell },
+      { name: "Service Catalog", href: "/requester/catalog", icon: Briefcase },
+      { name: "My Requests", href: "/requester/work-orders", icon: FileText },
+      { name: "Schedule", href: "/requester/agenda", icon: CalendarDays },
+      { name: "Invoices & Payments", href: "/requester/invoices", icon: CreditCard },
+      { name: "Notifications", href: "/requester/notifications", icon: Bell },
     ];
   }
   if (role === "provider") {
     return [
       { name: "Dashboard", href: "/provider/dashboard", icon: LayoutDashboard },
-      { name: "Meu Catálogo", href: "/provider/catalog", icon: Briefcase },
-      { name: "Ordens Atribuídas", href: "/provider/work-orders", icon: FileText },
-      { name: "Agenda", href: "/provider/agenda", icon: CalendarDays },
-      { name: "Financeiro", href: "/provider/financial", icon: Wallet },
-      { name: "Notificações", href: "/provider/notifications", icon: Bell },
+      { name: "My Catalog", href: "/provider/catalog", icon: Briefcase },
+      { name: "Assigned Orders", href: "/provider/work-orders", icon: FileText },
+      { name: "Schedule", href: "/provider/agenda", icon: CalendarDays },
+      { name: "Financials", href: "/provider/financial", icon: Wallet },
+      { name: "Notifications", href: "/provider/notifications", icon: Bell },
     ];
   }
   return [];

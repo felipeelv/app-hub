@@ -1,32 +1,51 @@
 import { useGetRequesterDashboard } from "@workspace/api-client-react";
 import { formatCurrency } from "@/lib/format";
 import { Clock, CheckCircle2, FileText, CreditCard } from "lucide-react";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Link } from "wouter";
+
+function SimpleStatusBadge({ status }: { status: string | undefined | null }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    requested:  { label: "Requested",  cls: "bg-blue-100 text-blue-700"   },
+    accepted:   { label: "Requested",  cls: "bg-blue-100 text-blue-700"   },
+    in_progress:{ label: "In Progress",cls: "bg-amber-100 text-amber-700" },
+    completed:  { label: "Completed",  cls: "bg-green-100 text-green-700" },
+    invoiced:   { label: "Completed",  cls: "bg-green-100 text-green-700" },
+    paid:       { label: "Completed",  cls: "bg-green-100 text-green-700" },
+    paid_out:   { label: "Completed",  cls: "bg-green-100 text-green-700" },
+    closed:     { label: "Completed",  cls: "bg-green-100 text-green-700" },
+    cancelled:  { label: "Cancelled",  cls: "bg-red-100 text-red-700"    },
+  };
+  const info = map[status ?? ""] ?? { label: status ?? "—", cls: "bg-muted text-muted-foreground" };
+  return (
+    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${info.cls}`}>
+      {info.label}
+    </span>
+  );
+}
 
 export function RequesterDashboard() {
   const { data: dashboard, isLoading } = useGetRequesterDashboard();
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Carregando dashboard...</div>;
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading dashboard...</div>;
   if (!dashboard) return null;
 
   const kpis = [
-    { label: "Solicitações Abertas", value: dashboard.openRequests, icon: Clock, color: "text-blue-600", bg: "bg-blue-100" },
-    { label: "Em Andamento", value: dashboard.inProgress, icon: FileText, color: "text-orange-600", bg: "bg-orange-100" },
-    { label: "Concluídas", value: dashboard.completed, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-100" },
-    { label: "Valor a Pagar", value: formatCurrency(dashboard.totalPendingAmount), icon: CreditCard, color: "text-destructive", bg: "bg-destructive/10" },
+    { label: "Open Requests",   value: dashboard.openRequests,              icon: Clock,         color: "text-blue-600",        bg: "bg-blue-100"        },
+    { label: "In Progress",     value: dashboard.inProgress,                icon: FileText,      color: "text-orange-600",      bg: "bg-orange-100"      },
+    { label: "Completed",       value: dashboard.completed,                 icon: CheckCircle2,  color: "text-green-600",       bg: "bg-green-100"       },
+    { label: "Amount Due",      value: formatCurrency(dashboard.totalPendingAmount), icon: CreditCard, color: "text-destructive", bg: "bg-destructive/10" },
   ];
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground tracking-tight">Visão Geral</h1>
-          <p className="text-muted-foreground mt-1">Acompanhe suas solicitações de serviço e pagamentos</p>
+          <h1 className="text-3xl font-display font-bold text-foreground tracking-tight">Overview</h1>
+          <p className="text-muted-foreground mt-1">Track your service requests and payments</p>
         </div>
         <Link href="/requester/catalog">
           <button className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:-translate-y-0.5 transition-all">
-            Solicitar Novo Serviço
+            Request New Service
           </button>
         </Link>
       </div>
@@ -49,19 +68,19 @@ export function RequesterDashboard() {
 
       <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-border/60 flex justify-between items-center bg-muted/10">
-          <h2 className="text-xl font-display font-bold">Ordens Recentes</h2>
+          <h2 className="text-xl font-display font-bold">Recent Orders</h2>
           <Link href="/requester/work-orders">
-            <span className="text-sm font-semibold text-primary hover:underline cursor-pointer">Ver histórico completo</span>
+            <span className="text-sm font-semibold text-primary hover:underline cursor-pointer">View full history</span>
           </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground uppercase tracking-wider bg-muted/30">
               <tr>
-                <th className="px-6 py-4 font-semibold">Serviço</th>
-                <th className="px-6 py-4 font-semibold">Local</th>
+                <th className="px-6 py-4 font-semibold">Service</th>
+                <th className="px-6 py-4 font-semibold">Location</th>
                 <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold text-right">Valor</th>
+                <th className="px-6 py-4 font-semibold text-right">Amount</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -69,13 +88,13 @@ export function RequesterDashboard() {
                 <tr key={wo.id} className="hover:bg-muted/30 transition-colors">
                   <td className="px-6 py-4 font-medium text-foreground">{wo.serviceName}</td>
                   <td className="px-6 py-4 text-muted-foreground">{wo.location}</td>
-                  <td className="px-6 py-4"><StatusBadge status={wo.status} /></td>
+                  <td className="px-6 py-4"><SimpleStatusBadge status={wo.status} /></td>
                   <td className="px-6 py-4 font-medium text-right">{formatCurrency(wo.finalPrice)}</td>
                 </tr>
               ))}
               {(!dashboard.recentWorkOrders || dashboard.recentWorkOrders.length === 0) && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">Você ainda não fez nenhuma solicitação.</td>
+                  <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">You haven't made any requests yet.</td>
                 </tr>
               )}
             </tbody>
