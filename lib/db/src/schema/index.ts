@@ -3,3 +3,4 @@ export * from "./catalog";
 export * from "./workorders";
 export * from "./financial";
 export * from "./notifications";
+export * from "./agenda";

@@ -9,14 +9,14 @@ import {
   FileText, 
   CreditCard, 
   Wallet, 
-  Settings, 
   Bell, 
   ShieldAlert,
   Menu,
   X,
   Search,
   MapPin,
-  ReceiptText
+  ReceiptText,
+  CalendarDays
 } from "lucide-react";
 import { useState } from "react";
 
@@ -30,6 +30,7 @@ const getNavItems = (role: string) => {
       { name: "Pagamentos", href: "/admin/payments", icon: CreditCard },
       { name: "Repasses", href: "/admin/payouts", icon: Wallet },
       { name: "Deslocamento / Comissão", href: "/admin/travel-pricing", icon: MapPin },
+      { name: "Agenda", href: "/admin/agenda", icon: CalendarDays },
       { name: "Auditoria", href: "/admin/audit", icon: ShieldAlert },
       { name: "Notificações", href: "/admin/notifications", icon: Bell },
     ];
@@ -39,6 +40,7 @@ const getNavItems = (role: string) => {
       { name: "Dashboard", href: "/requester/dashboard", icon: LayoutDashboard },
       { name: "Catálogo de Serviços", href: "/requester/catalog", icon: Briefcase },
       { name: "Minhas Solicitações", href: "/requester/work-orders", icon: FileText },
+      { name: "Agenda", href: "/requester/agenda", icon: CalendarDays },
       { name: "Faturas e Pagamentos", href: "/requester/invoices", icon: CreditCard },
       { name: "Notificações", href: "/requester/notifications", icon: Bell },
     ];
@@ -48,6 +50,7 @@ const getNavItems = (role: string) => {
       { name: "Dashboard", href: "/provider/dashboard", icon: LayoutDashboard },
       { name: "Meu Catálogo", href: "/provider/catalog", icon: Briefcase },
       { name: "Ordens Atribuídas", href: "/provider/work-orders", icon: FileText },
+      { name: "Agenda", href: "/provider/agenda", icon: CalendarDays },
       { name: "Financeiro", href: "/provider/financial", icon: Wallet },
       { name: "Notificações", href: "/provider/notifications", icon: Bell },
     ];

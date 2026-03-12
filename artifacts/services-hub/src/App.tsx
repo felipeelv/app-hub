@@ -28,6 +28,7 @@ import { ProviderCatalog } from "@/pages/provider/ProviderCatalog";
 import { ProviderFinancial } from "@/pages/provider/ProviderFinancial";
 
 import { Notifications } from "@/pages/shared/Notifications";
+import Agenda from "@/pages/shared/Agenda";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,6 +60,7 @@ function Router() {
         <Route path="/admin/travel-pricing" component={AdminTravelPricing} />
         <Route path="/admin/audit" component={AdminAuditLog} />
         <Route path="/admin/notifications" component={Notifications} />
+        <Route path="/admin/agenda" component={Agenda} />
 
         {/* Requester */}
         <Route path="/requester/dashboard" component={RequesterDashboard} />
@@ -67,6 +69,7 @@ function Router() {
         <Route path="/requester/work-orders" component={RequesterWorkOrders} />
         <Route path="/requester/invoices" component={RequesterInvoices} />
         <Route path="/requester/notifications" component={Notifications} />
+        <Route path="/requester/agenda" component={Agenda} />
 
         {/* Provider */}
         <Route path="/provider/dashboard" component={ProviderDashboard} />
@@ -75,6 +78,7 @@ function Router() {
         <Route path="/provider/work-orders" component={ProviderWorkOrders} />
         <Route path="/provider/financial" component={ProviderFinancial} />
         <Route path="/provider/notifications" component={Notifications} />
+        <Route path="/provider/agenda" component={Agenda} />
 
         <Route path="/" component={() => <div className="p-12 text-center text-muted-foreground">Use o menu lateral para navegar.</div>} />
         <Route component={Fallback} />
