@@ -1,14 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useListRequesterInvoices, usePayInvoices } from "@workspace/api-client-react";
 import { formatCurrency, formatDateShort } from "@/lib/format";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CreditCard, CheckSquare, Square } from "lucide-react";
 
 export function RequesterInvoices() {
+  const highlightWorkOrderId = new URLSearchParams(window.location.search).get("workOrderId");
   const { data: invoices, isLoading, refetch } = useListRequesterInvoices({ status: "pending" });
   const payMutation = usePayInvoices();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const highlightRef = useRef<HTMLTableRowElement>(null);
+
+  useEffect(() => {
+    if (highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [invoices]);
 
   const toggleSelect = (id: string) => {
     const newSet = new Set(selectedIds);
@@ -59,8 +67,10 @@ export function RequesterInvoices() {
               ) : invoices?.length === 0 ? (
                 <tr><td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">No pending invoices. All caught up!</td></tr>
               ) : (
-                invoices?.map(inv => (
-                  <tr key={inv.id} className={`transition-colors cursor-pointer ${selectedIds.has(inv.id) ? 'bg-primary/5' : 'hover:bg-muted/30'}`} onClick={() => toggleSelect(inv.id)}>
+                invoices?.map(inv => {
+                  const isHighlighted = highlightWorkOrderId === inv.workOrderId;
+                  return (
+                  <tr key={inv.id} ref={isHighlighted ? highlightRef : undefined} className={`transition-colors cursor-pointer ${isHighlighted ? 'ring-2 ring-amber-400 bg-amber-50' : selectedIds.has(inv.id) ? 'bg-primary/5' : 'hover:bg-muted/30'}`} onClick={() => toggleSelect(inv.id)}>
                     <td className="p-4 text-center">
                       <button className={selectedIds.has(inv.id) ? "text-primary" : "text-muted-foreground/50"}>
                         {selectedIds.has(inv.id) ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
@@ -74,7 +84,8 @@ export function RequesterInvoices() {
                     <td className="px-6 py-4"><StatusBadge status={inv.status} lang="en" /></td>
                     <td className="px-6 py-4 font-bold text-right text-foreground">{formatCurrency(inv.finalPrice)}</td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

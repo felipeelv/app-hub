@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDateShort } from "@/lib/format";
 
 type SimplifiedStatus = "requested" | "in_progress" | "completed" | "cancelled";
@@ -91,12 +92,13 @@ export function RequesterWorkOrders() {
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead>Requested</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   No requests found
                 </TableCell>
               </TableRow>
@@ -114,6 +116,21 @@ export function RequesterWorkOrders() {
                 </TableCell>
                 <TableCell className="text-right">{formatCurrency(o.finalPrice)}</TableCell>
                 <TableCell>{formatDateShort(o.requestedAt)}</TableCell>
+                <TableCell>
+                  {(o.status === "invoiced" || o.status === "paid") && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-amber-700 border-amber-300 hover:bg-amber-50 whitespace-nowrap"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/requester/invoices?workOrderId=${o.id}`);
+                      }}
+                    >
+                      Pay now
+                    </Button>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

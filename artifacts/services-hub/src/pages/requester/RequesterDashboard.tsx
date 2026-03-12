@@ -51,19 +51,38 @@ export function RequesterDashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpis.map((kpi, i) => (
-          <div key={i} className="bg-card p-6 rounded-2xl shadow-sm border border-border/60 hover:border-primary/30 transition-colors group">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${kpi.bg}`}>
-                <kpi.icon className={`w-6 h-6 ${kpi.color}`} />
+        {kpis.map((kpi, i) => {
+          const content = (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${kpi.bg}`}>
+                  <kpi.icon className={`w-6 h-6 ${kpi.color}`} />
+                </div>
+                {kpi.label === "Amount Due" && (
+                  <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">View Invoices</span>
+                )}
               </div>
+              <div>
+                <p className="text-3xl font-display font-bold text-foreground mb-1">{kpi.value}</p>
+                <p className="text-sm font-medium text-muted-foreground">{kpi.label}</p>
+              </div>
+            </>
+          );
+
+          if (kpi.label === "Amount Due") {
+            return (
+              <Link key={i} href="/requester/invoices" className="bg-card p-6 rounded-2xl shadow-sm border border-border/60 hover:border-primary/30 transition-colors group block cursor-pointer ring-amber-200 hover:ring-2">
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <div key={i} className="bg-card p-6 rounded-2xl shadow-sm border border-border/60 hover:border-primary/30 transition-colors group">
+              {content}
             </div>
-            <div>
-              <p className="text-3xl font-display font-bold text-foreground mb-1">{kpi.value}</p>
-              <p className="text-sm font-medium text-muted-foreground">{kpi.label}</p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden">

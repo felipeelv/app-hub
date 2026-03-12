@@ -3,7 +3,7 @@ import { useGetRequesterWorkOrder } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CreditCard } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { MapView } from "@/components/MapView";
 
@@ -69,6 +69,21 @@ export function RequesterWorkOrderDetail() {
         <h1 className="text-xl font-semibold">{order.serviceName}</h1>
         <SimplifiedBadge status={order.status} />
       </div>
+
+      {(order.status === "invoiced" || order.status === "paid") && (
+        <div className="flex items-center gap-4 p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-900">
+          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+            <CreditCard className="w-5 h-5 text-amber-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold">Payment pending</p>
+            <p className="text-sm text-amber-700">This service has been completed. Please proceed to Invoices to complete your payment.</p>
+          </div>
+          <Button onClick={() => navigate(`/requester/invoices?workOrderId=${id}`)} className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white">
+            Go to Invoices
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
