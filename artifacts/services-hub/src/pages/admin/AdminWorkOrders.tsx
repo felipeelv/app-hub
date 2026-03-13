@@ -85,7 +85,17 @@ export function AdminWorkOrders() {
                     </td>
                     <td className="px-6 py-4 font-medium text-foreground">{wo.serviceName}</td>
                     <td className="px-6 py-4">{wo.requesterCompanyName || '—'}</td>
-                    <td className="px-6 py-4">{wo.providerCompanyName || <span className="text-muted-foreground text-xs italic">Não atribuído</span>}</td>
+                    <td className="px-6 py-4">
+                      {wo.providerCompanyName && wo.providerCompanyName !== "N/A"
+                        ? wo.providerCompanyName
+                        : (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            Aguardando prestador
+                          </span>
+                        )
+                      }
+                    </td>
                     <td className="px-6 py-4"><StatusBadge status={wo.status} /></td>
                     <td className="px-6 py-4 text-right font-medium">{formatCurrency(wo.finalPrice)}</td>
                     <td className="px-6 py-4 text-right">

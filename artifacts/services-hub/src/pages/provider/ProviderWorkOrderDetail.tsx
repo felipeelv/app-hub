@@ -1,31 +1,61 @@
 import { useParams, useLocation } from "wouter";
-import { useGetProviderWorkOrder, useProviderWorkOrderAction } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ArrowLeft, CheckCircle, Play, Flag } from "lucide-react";
+import { ArrowLeft, CheckCircle, Play, Flag, Zap } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { MapView } from "@/components/MapView";
 import { useToast } from "@/hooks/use-toast";
+import { apiBase } from "@/lib/utils";
+
+async function fetchOrder(id: string) {
+  const res = await fetch(`${apiBase()}/api/provider/work-orders/${id}`);
+  if (!res.ok) throw new Error("Not found");
+  return res.json();
+}
+
+async function postAction(id: string, action: string) {
+  const res = await fetch(`${apiBase()}/api/provider/work-orders/${id}/action`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed");
+  return data;
+}
 
 export function ProviderWorkOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { data: order, refetch } = useGetProviderWorkOrder(id!);
-  const action = useProviderWorkOrderAction(id!);
 
-  if (!order) return <div className="p-8 text-muted-foreground">Loading...</div>;
+  const { data: order, refetch, isLoading } = useQuery({
+    queryKey: ["provider-order", id],
+    queryFn: () => fetchOrder(id!),
+    enabled: !!id,
+  });
 
-  const handleAction = async (a: "accept" | "start" | "complete") => {
-    try {
-      await action.mutateAsync({ action: a });
-      toast({ title: "Success", description: "Status updated!" });
+  const actionMutation = useMutation({
+    mutationFn: (action: string) => postAction(id!, action),
+    onSuccess: (data) => {
+      toast({ title: "Status updated!" });
       refetch();
-    } catch {
-      toast({ title: "Error", description: "Could not update status.", variant: "destructive" });
-    }
-  };
+      // If we just claimed it, update the title
+    },
+    onError: (err: any) => {
+      toast({ title: "Could not update status", description: err.message, variant: "destructive" });
+      refetch();
+    },
+  });
+
+  if (isLoading) return <div className="p-8 text-muted-foreground">Loading...</div>;
+  if (!order) return <div className="p-8 text-muted-foreground">Order not found.</div>;
+
+  const isPoolOrder = order.providerCompanyId === null;
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
@@ -34,8 +64,22 @@ export function ProviderWorkOrderDetail() {
           <ArrowLeft className="h-4 w-4 mr-1" /> Back
         </Button>
         <h1 className="text-xl font-semibold">{order.serviceName}</h1>
-        <StatusBadge status={order.status} lang="en" />
+        {isPoolOrder ? (
+          <Badge className="bg-amber-100 text-amber-700 border-amber-300">Open — Unassigned</Badge>
+        ) : (
+          <StatusBadge status={order.status} lang="en" />
+        )}
       </div>
+
+      {isPoolOrder && (
+        <div className="rounded-xl border border-amber-300/60 bg-amber-50/50 dark:bg-amber-950/10 p-4 flex items-start gap-3">
+          <Zap className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Open Job — First to accept wins</p>
+            <p className="text-sm text-amber-700/80 dark:text-amber-400/80 mt-0.5">This request is waiting for a provider. Click <strong>Accept Job</strong> to claim it.</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
@@ -43,6 +87,7 @@ export function ProviderWorkOrderDetail() {
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Category</span><span>{order.category}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Location</span><span>{order.location}</span></div>
+            {order.cep && <div className="flex justify-between"><span className="text-muted-foreground">ZIP Code</span><span>{order.cep}</span></div>}
             <div className="flex justify-between"><span className="text-muted-foreground">Requested</span><span>{formatDate(order.requestedAt)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Completed</span><span>{order.completedAt ? formatDate(order.completedAt) : "—"}</span></div>
           </CardContent>
@@ -73,25 +118,30 @@ export function ProviderWorkOrderDetail() {
       )}
 
       <Card>
-        <CardHeader><CardTitle className="text-sm">Localização</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">Location</CardTitle></CardHeader>
         <CardContent>
           <MapView address={order.location} cep={order.cep} />
         </CardContent>
       </Card>
 
       <div className="flex gap-3">
-        {order.status === "requested" && (
-          <Button onClick={() => handleAction("accept")} className="gap-2">
-            <CheckCircle className="h-4 w-4" /> Accept Job
+        {(isPoolOrder || order.status === "requested") && (
+          <Button
+            onClick={() => actionMutation.mutate("accept")}
+            disabled={actionMutation.isPending}
+            className="gap-2 bg-amber-500 hover:bg-amber-600 text-white"
+          >
+            <Zap className="h-4 w-4" />
+            {actionMutation.isPending ? "Claiming..." : "Accept Job"}
           </Button>
         )}
-        {order.status === "accepted" && (
-          <Button onClick={() => handleAction("start")} className="gap-2">
+        {order.status === "accepted" && !isPoolOrder && (
+          <Button onClick={() => actionMutation.mutate("start")} disabled={actionMutation.isPending} className="gap-2">
             <Play className="h-4 w-4" /> Start Job
           </Button>
         )}
         {order.status === "in_progress" && (
-          <Button onClick={() => handleAction("complete")} className="gap-2 bg-green-600 hover:bg-green-700">
+          <Button onClick={() => actionMutation.mutate("complete")} disabled={actionMutation.isPending} className="gap-2 bg-green-600 hover:bg-green-700">
             <Flag className="h-4 w-4" /> Mark as Completed
           </Button>
         )}
@@ -102,7 +152,7 @@ export function ProviderWorkOrderDetail() {
           <CardHeader><CardTitle className="text-sm">History</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {order.statusHistory.map((h) => (
+              {order.statusHistory.map((h: any) => (
                 <div key={h.id} className="flex items-start gap-3 text-sm border-b pb-2 last:border-0">
                   <StatusBadge status={h.status} lang="en" />
                   <div>

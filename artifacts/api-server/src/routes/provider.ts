@@ -9,7 +9,7 @@ import {
   payoutWorkOrders,
   commissionSettings,
 } from "@workspace/db/schema";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray, isNull } from "drizzle-orm";
 import { requireRole } from "../lib/profile.js";
 import { generateId } from "../lib/id.js";
 import { getCommissionRate } from "../lib/travel.js";
@@ -125,8 +125,22 @@ router.delete("/catalog/:id", async (req, res) => {
 });
 
 // ─── Work Orders ──────────────────────────────────────────────────────────────
+
+// GET /work-orders?available=true — unassigned "open pool" orders (Uber model)
+// GET /work-orders             — orders assigned to THIS provider
 router.get("/work-orders", async (req, res) => {
   const profile = await requireRole(req, "provider");
+
+  if (req.query.available === "true") {
+    // Return unassigned requested orders visible to all providers
+    const orders = await db
+      .select()
+      .from(workOrders)
+      .where(and(isNull(workOrders.providerCompanyId), eq(workOrders.status, "requested")))
+      .orderBy(desc(workOrders.createdAt));
+    res.json(orders.map(formatWorkOrderForProvider));
+    return;
+  }
 
   const orders = await db
     .select()
@@ -143,12 +157,16 @@ router.get("/work-orders", async (req, res) => {
 router.get("/work-orders/:id", async (req, res) => {
   const profile = await requireRole(req, "provider");
 
+  // Allow viewing if: assigned to this provider, OR unassigned (open pool)
   const [order] = await db
     .select()
     .from(workOrders)
-    .where(and(eq(workOrders.id, req.params.id), eq(workOrders.providerCompanyId, profile.companyId)));
+    .where(eq(workOrders.id, req.params.id));
 
-  if (!order) {
+  if (
+    !order ||
+    (order.providerCompanyId !== null && order.providerCompanyId !== profile.companyId)
+  ) {
     res.status(404).json({ error: "Not found" });
     return;
   }
@@ -166,12 +184,16 @@ router.post("/work-orders/:id/action", async (req, res) => {
   const profile = await requireRole(req, "provider");
   const { action, notes } = req.body;
 
+  // Fetch the order — allow unassigned (pool) OR assigned to this provider
   const [order] = await db
     .select()
     .from(workOrders)
-    .where(and(eq(workOrders.id, req.params.id), eq(workOrders.providerCompanyId, profile.companyId)));
+    .where(eq(workOrders.id, req.params.id));
 
-  if (!order) {
+  if (
+    !order ||
+    (order.providerCompanyId !== null && order.providerCompanyId !== profile.companyId)
+  ) {
     res.status(404).json({ error: "Not found" });
     return;
   }
@@ -189,6 +211,40 @@ router.post("/work-orders/:id/action", async (req, res) => {
   }
 
   const now = new Date();
+
+  // ── Uber-style claim: accept an unassigned order atomically ──────────────
+  if (action === "accept" && order.providerCompanyId === null) {
+    // Atomic update: only succeeds if STILL unassigned (race condition guard)
+    await db
+      .update(workOrders)
+      .set({ providerCompanyId: profile.companyId, status: "accepted", updatedAt: now })
+      .where(and(eq(workOrders.id, order.id), isNull(workOrders.providerCompanyId), eq(workOrders.status, "requested")));
+
+    // Verify we actually got it (someone else may have claimed it first)
+    const [claimed] = await db.select().from(workOrders).where(eq(workOrders.id, order.id));
+    if (claimed.providerCompanyId !== profile.companyId) {
+      res.status(409).json({ error: "This job was just claimed by another provider. Please refresh." });
+      return;
+    }
+
+    await db.insert(workOrderStatusHistory).values({
+      id: generateId(),
+      workOrderId: order.id,
+      status: "accepted",
+      note: notes || "Job claimed and accepted by provider",
+      changedBy: profile.name,
+    });
+
+    const history = await db
+      .select()
+      .from(workOrderStatusHistory)
+      .where(eq(workOrderStatusHistory.workOrderId, order.id))
+      .orderBy(desc(workOrderStatusHistory.changedAt));
+
+    res.json({ ...formatWorkOrderForProvider(claimed), statusHistory: history });
+    return;
+  }
+
   const updates: any = { status: newStatus, updatedAt: now };
   if (action === "complete") updates.completedAt = now;
 
@@ -291,9 +347,11 @@ function formatWorkOrderForProvider(o: any) {
     serviceName: o.serviceName,
     category: o.category,
     location: o.location,
+    cep: o.cep,
     description: o.description,
     notes: o.notes,
     status: o.status,
+    providerCompanyId: o.providerCompanyId ?? null,
     requestedAt: o.requestedAt,
     completedAt: o.completedAt,
     basePrice: o.basePrice ? parseFloat(o.basePrice as string) : null,
