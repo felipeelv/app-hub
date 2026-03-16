@@ -1,29 +1,27 @@
 import app from "./app";
 import { autoSeedIfEmpty } from "./seed";
 
-const rawPort = process.env["PORT"];
-
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
-
+const rawPort = process.env.PORT || "3000";
 const port = Number(rawPort);
 
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
+// Vercel serverless handler
+if (process.env.VERCEL) {
+  // Running on Vercel - export handler
+  module.exports = app;
+} else {
+  // Running locally - start server
+  autoSeedIfEmpty()
+    .then(() => {
+      app.listen(port, () => {
+        console.log(`Server listening on port ${port}`);
+      });
+    })
+    .catch((err) => {
+      console.error("Failed to auto-seed database:", err);
+      app.listen(port, () => {
+        console.log(`Server listening on port ${port} (seed skipped due to error)`);
+      });
+    });
 }
 
-autoSeedIfEmpty()
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`Server listening on port ${port}`);
-    });
-  })
-  .catch((err) => {
-    console.error("Failed to auto-seed database:", err);
-    app.listen(port, () => {
-      console.log(`Server listening on port ${port} (seed skipped due to error)`);
-    });
-  });
+export default app;

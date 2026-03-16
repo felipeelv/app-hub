@@ -1,0 +1,42 @@
+{
+  "name": "@workspace/admin-portal",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config vite.config.ts --host 0.0.0.0",
+    "build": "vite build --config vite.config.ts",
+    "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.10.0",
+    "@tanstack/react-query": "catalog:",
+    "@workspace/api-client-react": "workspace:*",
+    "@workspace/shared-ui": "workspace:*",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "date-fns": "^3.6.0",
+    "framer-motion": "catalog:",
+    "lucide-react": "catalog:",
+    "mapbox-gl": "^3.19.1",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-hook-form": "^7.55.0",
+    "recharts": "^2.15.4",
+    "tailwind-merge": "catalog:",
+    "wouter": "^3.3.5",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "@types/mapbox-gl": "^3.5.0",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}
