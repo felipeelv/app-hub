@@ -84,12 +84,15 @@ pnpm --filter @workspace/db run push
 1. **Crie um novo projeto** no Vercel
 2. **Importe o repositório**
 3. **Configure o Root Directory**: `artifacts/api-server`
-4. **Environment Variables**:
+4. **Framework Preset**: `Other`
+5. **Build Command**: (deixe em branco - usa vercel.json)
+6. **Output Directory**: (deixe em branco)
+7. **Environment Variables**:
    ```
    DATABASE_URL=sua_connection_string
    NODE_ENV=production
    ```
-5. **Deploy**
+8. **Deploy**
 
 A API estará disponível em: `https://seu-projeto-api.vercel.app`
 
@@ -102,14 +105,15 @@ A API estará disponível em: `https://seu-projeto-api.vercel.app`
 1. No Vercel, clique em **"Add New Project"**
 2. Importe o mesmo repositório
 3. **Root Directory**: `apps/admin-portal`
-4. **Build Command**: `pnpm run build`
-5. **Output Directory**: `dist`
-6. **Environment Variables**:
+4. **Framework Preset**: `Vite`
+5. **Build Command**: `pnpm run build`
+6. **Output Directory**: `dist`
+7. **Environment Variables**:
    ```
    VITE_API_URL=https://seu-projeto-api.vercel.app/api
    VITE_MAPBOX_TOKEN=seu_token_mapbox
    ```
-7. **Deploy**
+8. **Deploy**
 
 ### Portal Prestador
 
