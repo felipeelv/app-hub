@@ -20,11 +20,13 @@ export function RequesterCatalog() {
     if (!selectedService) return;
     const fd = new FormData(e.currentTarget);
     await createMutation.mutateAsync({
-      catalogItemId: selectedService.id,
-      location: fd.get('location') as string,
-      cep: fd.get('cep') as string,
-      description: fd.get('description') as string,
-      notes: fd.get('notes') as string,
+      data: {
+        catalogItemId: selectedService.id,
+        location: fd.get('location') as string,
+        cep: fd.get('cep') as string,
+        description: fd.get('description') as string,
+        notes: fd.get('notes') as string,
+      },
     });
     setLocation("/work-orders");
   };

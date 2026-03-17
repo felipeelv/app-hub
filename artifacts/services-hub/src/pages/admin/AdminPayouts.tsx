@@ -85,10 +85,12 @@ export function AdminPayouts() {
   const handleAuthorize = async (group: PendingProviderGroup) => {
     try {
       await registerPayout.mutateAsync({
-        providerCompanyId: group.providerCompanyId,
-        workOrderIds: group.orders.map((o) => o.id),
-        amount: group.totalReceivable,
-        notes: "",
+        data: {
+          providerCompanyId: group.providerCompanyId,
+          workOrderIds: group.orders.map((o) => o.id),
+          amount: group.totalReceivable,
+          notes: "",
+        },
       });
       toast({ title: "Repasse autorizado!", description: `${fmtMoney(group.totalReceivable)} repassado para ${group.providerCompanyName}.` });
       setConfirmGroup(null);

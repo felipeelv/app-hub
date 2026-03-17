@@ -167,7 +167,7 @@ export function RequesterWorkOrderDetail() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <MapView address={order.location} cep={order.cep} />
+          <MapView address={order.location ?? ""} cep="" />
         </CardContent>
       </Card>
 

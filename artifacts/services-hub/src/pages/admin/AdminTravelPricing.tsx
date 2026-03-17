@@ -29,8 +29,8 @@ export function AdminTravelPricing() {
   const { data: rules = [], refetch } = useListTravelPricingRules();
   const { data: commSettings, refetch: refetchComm } = useGetCommissionSettings();
   const createRule = useCreateTravelPricingRule();
-  const updateRule = useUpdateTravelPricingRule("");
-  const deleteRule = useDeleteTravelPricingRule("");
+  const updateRule = useUpdateTravelPricingRule();
+  const deleteRule = useDeleteTravelPricingRule();
   const updateComm = useUpdateCommissionSettings();
   const { toast } = useToast();
 
@@ -40,7 +40,7 @@ export function AdminTravelPricing() {
 
   const handleCreate = async () => {
     try {
-      await createRule.mutateAsync({ ...form, price: parseFloat(form.price) });
+      await createRule.mutateAsync({ data: { ...form, ruleType: form.ruleType as "cep_prefix" | "region_name" | "fixed", price: parseFloat(form.price) } });
       toast({ title: "Regra criada com sucesso" });
       setOpen(false);
       setForm({ name: "", ruleType: "cep_prefix", matchValue: "", price: "", description: "", isActive: true });
@@ -61,7 +61,7 @@ export function AdminTravelPricing() {
 
   const handleSaveComm = async () => {
     try {
-      await updateComm.mutateAsync({ defaultRate: parseFloat(commRate || String(commSettings?.defaultRate ?? 15)) });
+      await updateComm.mutateAsync({ data: { defaultRate: parseFloat(commRate || String(commSettings?.defaultRate ?? 15)) } });
       toast({ title: "Comissão atualizada!" });
       refetchComm();
     } catch {
