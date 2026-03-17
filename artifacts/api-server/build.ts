@@ -54,12 +54,29 @@ async function buildAll() {
       !(pkg.dependencies?.[dep]?.startsWith("workspace:")),
   );
 
+  // Bundle the Express app for the standalone server
   await esbuild({
     entryPoints: [path.resolve(__dirname, "src/index.ts")],
     platform: "node",
     bundle: true,
     format: "cjs",
     outfile: path.resolve(distDir, "index.cjs"),
+    define: {
+      "process.env.NODE_ENV": '"production"',
+    },
+    minify: true,
+    external: externals,
+    logLevel: "info",
+  });
+
+  // Bundle the Express app module for the Vercel serverless handler
+  console.log("building vercel handler...");
+  await esbuild({
+    entryPoints: [path.resolve(__dirname, "src/app.ts")],
+    platform: "node",
+    bundle: true,
+    format: "cjs",
+    outfile: path.resolve(distDir, "app.cjs"),
     define: {
       "process.env.NODE_ENV": '"production"',
     },
