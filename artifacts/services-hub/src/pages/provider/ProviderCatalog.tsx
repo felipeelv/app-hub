@@ -34,7 +34,7 @@ export function ProviderCatalog() {
       regions: form.regions ? form.regions.split(",").map((r) => r.trim()) : [],
     };
     try {
-      await createItem.mutateAsync(payload);
+      await createItem.mutateAsync({ data: payload });
       toast({ title: "Service created successfully!" });
       setOpen(false);
       setForm(emptyForm);

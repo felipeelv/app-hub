@@ -43,7 +43,7 @@ export * from './components/sheet';
 export * from './components/sidebar';
 export * from './components/skeleton';
 export * from './components/slider';
-export * from './components/sonner';
+export { Toaster as SonnerToaster } from './components/sonner';
 export * from './components/spinner';
 export * from './components/StatusBadge';
 export * from './components/switch';

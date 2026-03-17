@@ -10,7 +10,7 @@ export function RequesterInvoices() {
   const payMutation = usePayInvoices();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
-  const highlightRef = useRef<HTMLDivElement>(null);
+  const highlightRef = useRef<any>(null);
 
   useEffect(() => {
     if (highlightRef.current) {
@@ -31,8 +31,10 @@ export function RequesterInvoices() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     await payMutation.mutateAsync({
-      invoiceIds: Array.from(selectedIds),
-      paymentMethod: fd.get("paymentMethod") as any
+      data: {
+        invoiceIds: Array.from(selectedIds),
+        paymentMethod: fd.get("paymentMethod") as any
+      },
     });
     setIsPayModalOpen(false);
     setSelectedIds(new Set());

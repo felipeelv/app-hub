@@ -31,8 +31,10 @@ export function RequesterInvoices() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     await payMutation.mutateAsync({
-      invoiceIds: Array.from(selectedIds),
-      paymentMethod: fd.get("paymentMethod") as any
+      data: {
+        invoiceIds: Array.from(selectedIds),
+        paymentMethod: fd.get("paymentMethod") as any
+      },
     });
     setIsPayModalOpen(false);
     setSelectedIds(new Set());

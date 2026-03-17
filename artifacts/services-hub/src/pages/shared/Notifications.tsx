@@ -32,7 +32,7 @@ const typeLabels: Record<string, string> = {
 
 export function Notifications() {
   const { data: notifs = [], refetch } = useListNotifications({});
-  const markRead = useMarkNotificationRead("");
+  const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
   const queryClient = useQueryClient();
 

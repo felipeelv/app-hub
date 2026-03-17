@@ -25,8 +25,8 @@ export function AdminWorkOrderDetail() {
   const [, navigate] = useLocation();
   const { data: order, refetch } = useGetAdminWorkOrder(id!);
   const { data: providers = [] } = useListProviderCompanies();
-  const adjust = useAdminAdjustWorkOrder(id!);
-  const assign = useAdminAssignWorkOrder(id!);
+  const adjust = useAdminAdjustWorkOrder();
+  const assign = useAdminAssignWorkOrder();
 
   const [adjustNotes, setAdjustNotes] = useState("");
   const [selectedProvider, setSelectedProvider] = useState("");
@@ -43,7 +43,7 @@ export function AdminWorkOrderDetail() {
   const handleAdjust = async (action: "cancel" | "reopen" | "correct") => {
     if (!adjustNotes && action !== "reopen") return;
     try {
-      await adjust.mutateAsync({ action, notes: adjustNotes });
+      await adjust.mutateAsync({ id: id!, data: { action, notes: adjustNotes } });
       toast.success("Ordem de serviço atualizada.");
       setAdjustOpen(false);
       refetch();
@@ -55,7 +55,7 @@ export function AdminWorkOrderDetail() {
   const handleAssign = async () => {
     if (!selectedProvider) return;
     try {
-      await assign.mutateAsync({ providerCompanyId: selectedProvider, catalogItemId: order.serviceCatalogItemId || "" });
+      await assign.mutateAsync({ id: id!, data: { providerCompanyId: selectedProvider, catalogItemId: order.serviceCatalogItemId || "" } });
       toast.success("Prestador atribuído com sucesso.");
       refetch();
     } catch {
@@ -108,7 +108,7 @@ export function AdminWorkOrderDetail() {
       <Card>
         <CardHeader><CardTitle className="text-sm">Localização</CardTitle></CardHeader>
         <CardContent>
-          <MapView address={order.location} cep={order.cep} />
+          <MapView address={order.location ?? ""} cep="" />
         </CardContent>
       </Card>
 
